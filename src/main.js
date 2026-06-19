@@ -1,3 +1,4 @@
+import '../public/style.css';
 import { Game as GameScene } from './game/scenes/Game';
 import { Preloader } from './game/scenes/Preloader';
 import * as Phaser from 'phaser';
