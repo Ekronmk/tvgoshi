@@ -4,14 +4,22 @@ import * as Phaser from 'phaser';
 
 const config = {
     type: Phaser.AUTO,
-    width: 1024,
-    height: 768,
+    width: window.innerWidth,
+    height: window.innerHeight,
+    scale: {
+        mode: Phaser.Scale.RESIZE,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        fullscreenTarget: 'game-container',
+        expandParent: true,
+        width: window.innerWidth,
+        height: window.innerHeight
+    },
     parent: 'game-container',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#000000',
     scene: [
         Preloader,
         GameScene
     ]
 };
 
-export default new Phaser.Game(config);
+export default window.game = new Phaser.Game(config);

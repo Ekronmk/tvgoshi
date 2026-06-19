@@ -6,6 +6,24 @@ export class Game extends Scene {
     }
 
     create() {
+        // 0. Agregar fondo estático (pantalla completa)
+        const bg = this.add.image(0, 0, 'background');
+        bg.setOrigin(0, 0);
+        bg.setDepth(-10);
+        bg.setScrollFactor(0);
+        
+        // Escalar el fondo para que ocupe toda la pantalla
+        const gameWidth = this.sys.game.scale.width;
+        const gameHeight = this.sys.game.scale.height;
+        bg.setDisplaySize(gameWidth, gameHeight);
+        
+        // Actualizar el fondo cuando la ventana se redimensiona
+        this.sys.game.scale.on('resize', () => {
+            const newWidth = this.sys.game.scale.width;
+            const newHeight = this.sys.game.scale.height;
+            bg.setDisplaySize(newWidth, newHeight);
+        });
+        
         // 1. Inicializar Estados (Valores de 0 a 100)
         this.stats = {
             hambre: 70,
@@ -13,9 +31,12 @@ export class Game extends Scene {
             felicidad: 50
         };
 
-        // 2. Fondo y Textos UI
-        this.add.text(512, 40, 'TvGoshi - Cuida a tu Dinosaurio', { fontSize: '28px', fill: '#ffffff' }).setOrigin(0.5);
-        this.add.text(512, 80, 'Escanea códigos con tu lector HID: CARNE, AGUA, ENSALADA, PELOTA', { fontSize: '16px', fill: '#aaaaaa' }).setOrigin(0.5);
+        // 2. Fondo y Textos UI - Centrados en la pantalla
+        const centerX = gameWidth / 2;
+        const centerY = gameHeight / 2;
+        
+        this.add.text(centerX, 40, 'TvGoshi - Cuida a tu Dinosaurio', { fontSize: '28px', fill: '#ffffff' }).setOrigin(0.5);
+        this.add.text(centerX, 80, 'Escanea códigos con tu lector HID: CARNE, AGUA, ENSALADA, PELOTA', { fontSize: '16px', fill: '#aaaaaa' }).setOrigin(0.5);
 
         // Crear textos visuales para los estados
         this.uiTexts = {
@@ -25,11 +46,16 @@ export class Game extends Scene {
         };
 
         // Texto flotante para logear el último escaneo
-        this.logText = this.add.text(512, 600, 'Esperando escaneo...', { fontSize: '22px', fill: '#00ff00' }).setOrigin(0.5);
+        this.logText = this.add.text(centerX, gameHeight - 100, 'Esperando escaneo...', { fontSize: '22px', fill: '#00ff00' }).setOrigin(0.5);
 
-        // 3. Crear e iniciar al Dinosaurio
-        this.dino = this.add.sprite(512, 400, 'dino').setScale(5); // Escalado para que se vea grande
+        // 3. Crear e iniciar al Dinosaurio en el centro
+        const dinoX = gameWidth / 2;
+        const dinoY = gameHeight / 2; // Centrado verticalmente
+        this.dino = this.add.sprite(dinoX, dinoY, 'dino');
+        this.dino.setScale(1.9); // Escala visible y completa
+        this.dino.setDepth(1); // Asegurar que esté encima del fondo
         this.dino.play('idle');
+        
 
         // Al terminar una animación de acción, regresa automáticamente a 'idle'
         this.dino.on('animationcomplete', (anim) => {
@@ -48,18 +74,22 @@ export class Game extends Scene {
 
         // 5. Captura de Lector de Códigos de Barras (Teclado HID)
         this.barcodeBuffer = '';
-        this.input.keyboard.on('keydown', (event) => {
-            // Los lectores HID terminan el envío con la tecla "Enter"
-            if (event.key === 'Enter') {
-                if (this.barcodeBuffer.length > 0) {
-                    this.processBarcode(this.barcodeBuffer.toUpperCase().trim());
-                    this.barcodeBuffer = ''; // Limpiar buffer
-                }
-            } else if (event.key.length === 1) {
-                // Ir acumulando caracteres imprimibles
-                this.barcodeBuffer += event.key;
+        window.addEventListener('keydown', (event) => {
+        // Ignorar repeticiones automáticas
+        if (event.repeat) return;
+        if (event.key === 'Enter') {
+            const code = this.barcodeBuffer.trim().toUpperCase();
+            if (code.length > 0) {
+                console.log('CODIGO:', code);
+                this.processBarcode(code);
             }
-        });
+            this.barcodeBuffer = '';
+            return;
+        }
+        if (event.key.length === 1) {
+            this.barcodeBuffer += event.key;
+        }
+    });
 
         this.updateUI();
     }
