@@ -17,7 +17,7 @@ const phasermsg = () => {
 }   
 
 export default defineConfig({
-    base: './',
+    base: '/tvgoshi/',
     logLevel: 'warn',
     build: {
         rollupOptions: {
