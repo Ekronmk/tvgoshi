@@ -31,6 +31,29 @@ export class Game extends Scene {
             felicidad: 50
         };
 
+        // ======================
+        // AUDIO
+        // ======================
+
+        this.music = this.sound.add('bgmusic', {
+            volume: 0.25,
+            loop: true
+        });
+
+        this.music.play();
+
+        this.sounds = {
+            angry: this.sound.add('angrySound', { volume: 0.8 }),
+            sad: this.sound.add('sadSound', { volume: 0.8 }),
+            drink: this.sound.add('drinkSound', { volume: 0.8 }),
+            eat: this.sound.add('eatSound', { volume: 0.8 }),
+            sleep: this.sound.add('sleepSound', {
+                volume: 0.5,
+                loop: true
+            })
+        };
+
+
         // 2. Fondo y Textos UI - Centrados en la pantalla
         const centerX = gameWidth / 2;
         const centerY = gameHeight / 2;
@@ -56,6 +79,17 @@ export class Game extends Scene {
         this.dino.setDepth(1); // Asegurar que esté encima del fondo
         this.dino.play('idle');
         
+        // ======================
+        // TIMER DE INACTIVIDAD
+        // ======================
+
+        this.isSleeping = false;
+
+        this.idleTimer = this.time.addEvent({
+            delay: 60000, // 1 minuto
+            callback: this.goToSleep,
+            callbackScope: this
+        });
 
         // Al terminar una animación de acción, regresa automáticamente a 'idle'
         this.dino.on('animationcomplete', (anim) => {
@@ -100,6 +134,45 @@ export class Game extends Scene {
         this.stats.sed = Math.max(0, this.stats.sed - 7);
         this.stats.felicidad = Math.max(0, this.stats.felicidad - 4);
         this.updateUI();
+
+        if (this.isSleeping) {
+            return;
+        }
+
+        if (this.stats.sed <= 10) {
+
+            this.dino.play('thirsty');
+
+            if (!this.sounds.drink.isPlaying) {
+                this.sounds.drink.play();
+            }
+
+        }
+        else if (this.stats.hambre <= 10) {
+
+            this.dino.play('sad');
+
+            if (!this.sounds.sad.isPlaying) {
+                this.sounds.sad.play();
+            }
+
+        }
+        else if (this.stats.felicidad <= 10) {
+
+            this.dino.play('angry');
+
+            if (!this.sounds.angry.isPlaying) {
+                this.sounds.angry.play();
+            }
+
+        }
+        else if (
+            this.dino.anims.currentAnim &&
+            this.dino.anims.currentAnim.key !== 'idle'
+        ) {
+
+            this.dino.play('idle');
+        }
     }
 
     // Actualiza los textos en pantalla
@@ -109,8 +182,35 @@ export class Game extends Scene {
         this.uiTexts.felicidad.setText(`Felicidad: ${this.stats.felicidad}% ${this.stats.felicidad < 30 ? '⚠️' : '⚽'}`);
     }
 
+    resetIdleTimer() {
+        this.idleTimer.remove(false);
+        this.idleTimer = this.time.addEvent({
+            delay: 60000,
+            callback: this.goToSleep,
+            callbackScope: this
+        });
+
+        if (this.isSleeping) {
+            this.isSleeping = false;
+            this.sounds.sleep.stop();
+            this.dino.play('idle');
+        }
+    }
+
+    goToSleep() {
+        this.isSleeping = true;
+        this.dino.play('sleeping');
+        if (!this.sounds.sleep.isPlaying) {
+            this.sounds.sleep.play();
+        }
+        this.logText.setText('😴 El dinosaurio se quedó dormido');
+    }
+
+    
+
     // Procesa el código recibido por el lector HID
     processBarcode(code) {
+        this.resetIdleTimer();
         this.logText.setText(`Código escaneado: ${code}`);
         
         // Feedback visual rápido parpadeando el texto del log
@@ -125,19 +225,22 @@ export class Game extends Scene {
             case 'CARNE':
                 this.stats.hambre = Math.min(100, this.stats.hambre + 30);
                 this.dino.play('eating');
+                this.sounds.eat.play();
                 break;
             case 'ENSALADA':
                 this.stats.hambre = Math.min(100, this.stats.hambre + 15);
                 this.stats.felicidad = Math.min(100, this.stats.felicidad + 10);
                 this.dino.play('eating');
+                this.sounds.eat.play();
                 break;
             case 'AGUA':
                 this.stats.sed = Math.min(100, this.stats.sed + 35);
                 this.dino.play('drinking');
+                this.sounds.drink.play();
                 break;
             case 'PELOTA':
                 this.stats.felicidad = Math.min(100, this.stats.felicidad + 40);
-                this.dino.play('playing');
+                this.dino.play('happy');
                 break;
             default:
                 this.logText.setText(`Código desconocido: ${code}`);

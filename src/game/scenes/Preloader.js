@@ -9,6 +9,16 @@ export class Preloader extends Scene {
         // Cargar imagen de fondo
         this.load.image('background', 'assets/BG_Selva.png');
 
+        // Música
+        this.load.audio('bgmusic', 'assets/audio/bg_jungle.mp3');
+
+        // Efectos
+        this.load.audio('angrySound', 'assets/audio/angry_jungle.mp3');
+        this.load.audio('sadSound', 'assets/audio/cry_jungle.mp3');
+        this.load.audio('drinkSound', 'assets/audio/drink_jungle.mp3');
+        this.load.audio('eatSound', 'assets/audio/eat_jungle.mp3');
+        this.load.audio('sleepSound', 'assets/audio/snoring_jungle.mp3');
+
         // Cargar el spritesheet normalizado del dino (grid uniforme)
         this.load.spritesheet('dino', 'assets/Spritesheet_Dino_LTE.png', {
             frameWidth: 160,
